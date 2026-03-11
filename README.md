@@ -1,209 +1,321 @@
 第一版：A multimodal research assistant that takes problem descriptions as input and returns relevant papers with mechanism, evidence, and trade-off analysis（一个面向多模态研究问题的科研助手：输入研究痛点描述，输出相关论文、方法机制、证据与代价分析）.
 
----
+# MultiModal Research Compass（多模态科研罗盘）
 
-## Overview（项目简介）
-
-MultiModal Research Compass（多模态科研罗盘） is a research support project focused on multimodal machine learning（MultiModal Research Compass 是一个聚焦多模态机器学习方向的科研辅助项目）.
-
-Instead of relying only on keyword-based search（它不是只依赖关键词检索）, this project starts from a researcher's actual problem description（而是从研究者真实遇到的研究痛点描述出发）, such as:
-
-- what problem they are working on（当前在做什么问题）
-- what bottleneck they are facing（当前遇到的瓶颈）
-- what constraints they must satisfy（必须满足哪些约束）
-- what kind of methods they are looking for（希望找到什么类型的方法）
-- what kinds of costs or assumptions are unacceptable（哪些代价或假设不可接受）
-
-The system then converts the problem description into structured retrieval intents（系统会把这些问题描述转成结构化检索意图）, retrieves relevant multimodal papers（检索多模态相关论文）, and generates structured result cards（并输出结构化结果卡片）, including:
-
-- why the paper is relevant（为什么相关）
-- what mechanism it uses（它依赖什么机制）
-- what evidence supports it（它有哪些实验支持）
-- what trade-offs or risks it has（它有哪些代价与风险）
-- whether it may fit the current research problem（它是否适合当前研究问题）
+一个面向多模态研究问题的科研助手：输入研究痛点描述，输出相关论文、方法机制、证据与代价分析。
 
 ---
 
-## Motivation（项目动机）
+## 1. 项目简介
 
-Keyword-based paper search is often insufficient for real research workflows（仅靠关键词搜索通常不足以支持真实科研流程）.
+**MultiModal Research Compass（多模态科研罗盘）** 是一个聚焦于多模态机器学习（Multimodal Machine Learning）领域的科研辅助项目。
 
-In multimodal research, a method that works well in one subproblem or neighboring setting may be highly relevant to another problem（在多模态研究中，一个在相邻问题上表现很好的方法，可能对另一个问题也很有启发）, but researchers may fail to retrieve it simply because they do not know the “right keywords” in advance（但研究者往往因为不知道“正确关键词”而检索不到）.
+它的核心目标不是单纯做“关键词搜论文”，也不是做一个“自动写论文”的系统，而是希望从研究者真实遇到的**问题、瓶颈、约束和目标能力**出发，帮助研究者更有效地检索相关论文，并输出带有结构化解释的分析结果。
 
-This project is designed to support a more problem-driven and judgment-oriented research workflow（本项目希望支持一种更“问题驱动、判断导向”的科研工作流）.
+与传统文献检索不同，本项目强调：
 
-The goal is not to automatically decide which paper is “valuable” in an absolute sense（目标不是替研究者自动裁决哪篇论文“绝对有价值”）, but to help researchers:
+- 先问题，后关键词
+- 先证据，后推断
+- 先机制匹配，后方法推荐
+- 先代价与边界，后“方法看起来很强”
 
-- retrieve relevant work more effectively（更有效地找到相关工作）
-- understand papers in a structured way（以结构化方式理解论文）
-- connect methods to actual research pain points（把方法和真实研究痛点对应起来）
-- identify trade-offs, assumptions, and transfer risks（识别方法的代价、前提与迁移风险）
-- build stronger research taste over time（逐步提升科研判断力与科研品味）
-
----
-
-## Current Scope（当前范围）
-
-Version 1（第一版） only focuses on the multimodal research domain（第一版只聚焦多模态研究领域）.
-
-The initial scope includes topics such as（初始覆盖范围包括）:
-
-- missing modality / incomplete multimodal learning（模态缺失 / 不完整多模态学习）
-- multimodal fusion（多模态融合）
-- uncertainty-aware multimodal learning（不确定性感知的多模态学习）
-- conflict-aware evidence fusion（冲突感知证据融合）
-- multimodal alignment（多模态对齐）
-- multimodal robustness（多模态鲁棒性）
-- partial observation / sparse evidence settings in multimodal tasks（多模态任务中的部分观测 / 稀疏证据场景）
-
-At this stage, the system is designed as a retrieval-and-analysis assistant rather than a full autonomous research agent（当前阶段，本系统定位为“检索与分析助手”，而不是“全自动科研智能体”）.
+本项目当前只聚焦**多模态领域**，不追求第一版就支持所有学科。
 
 ---
 
-## Core Idea（核心思想）
+## 2. 项目动机
 
-The system does not begin with a paper title or a fixed keyword（系统不是从论文标题或固定关键词开始）.
+在真实科研工作中，研究者经常会遇到以下问题：
 
-Instead, it begins with a researcher’s problem description（它从研究者的研究痛点描述开始）.
+### 2.1 关键词检索不够用
+很多时候，研究者知道自己遇到了什么困难，但并不知道应该用什么关键词去搜。  
+尤其是当某个方法在别的相邻方向、相邻任务、甚至不同子领域里已经被证明有效时，传统关键词检索很容易漏掉这些有价值的工作。
 
-### Example input（输入示例）
+### 2.2 通用大模型容易出现文献幻觉
+直接让大模型“推荐相关论文”，很容易出现以下问题：
 
-> I am working on multimodal sentiment analysis with missing modalities at test time.  
-> I do not only want modality completion, but also robust downstream classification.  
-> I also want uncertainty awareness, so that wrong completion does not mislead final decisions.  
-> Existing methods often assume random missing patterns, but I care more about irregular and realistic missing scenarios.
+- 假论文标题
+- 假作者
+- 假链接
+- 编造引用
+- 只挑选少量“看起来可能相关”的论文，但无法解释为什么没选别的
 
-The system should parse this input into structured research intents（系统会把这段话解析成结构化研究意图）, including:
+### 2.3 检索结果缺少“为什么选它”的解释
+即使系统给出了若干篇论文，研究者仍然需要知道：
 
-- task（任务）
-- bottleneck（瓶颈）
-- constraint（约束）
-- desired capability（目标能力）
-- unacceptable assumptions or costs（不可接受的假设或代价）
+- 这篇论文到底对应了我的哪个痛点
+- 它解决的是问题本身，还是只是表面类似
+- 它的核心机制是什么
+- 它的实验是否真的支持结论
+- 它的方法是否代价过高
+- 它是否适合迁移到我的研究问题中
 
-Then it retrieves papers and outputs structured result cards（然后检索论文并输出结构化结果卡片）.
+### 2.4 多模态领域尤其容易出现“组块堆砌”
+多模态研究中常见的问题包括：
 
----
+- 模块拼接很多，但真正解决的问题不清楚
+- 方法看起来很强，但训练/推理代价很高
+- 论文解决的是 benchmark 问题，而不是真实问题
+- 模态补全做得很好，但对下游任务帮助有限
+- 融合机制复杂，但收益和代价不成比例
 
-## What the System Returns（系统输出什么）
-
-For each retrieved paper, the system generates a structured card with fields such as（对于每篇召回论文，系统会生成结构化结果卡片，包含如下信息）:
-
-- Basic paper information（论文基础信息）
-- Why it was retrieved（为什么被召回）
-- What mechanism it uses（它使用什么机制）
-- What evidence supports it（有哪些实验支持）
-- What trade-offs it introduces（引入了哪些代价）
-- Why it may fit the current research problem（为什么可能适合当前问题）
-- Why it may not fit（为什么可能不适合）
-- Transfer risks and assumptions（迁移风险与前提）
-
-This makes the output closer to a research judgment aid rather than a generic summary tool（这使得系统输出更接近“研究判断辅助”，而不是普通摘要工具）.
+因此，本项目希望构建一个更贴近**研究判断（research judgment）**的科研助手，而不只是一个普通的论文搜索器。
 
 ---
 
-## V1 Goals（第一版目标）
+## 3. 第一版范围（V1 Scope）
 
-The first version aims to support the following workflow（第一版目标支持如下流程）:
+第一版（V1）只做以下事情：
 
-1. Input a multimodal research pain point description（输入一段多模态研究痛点描述）
-2. Parse the description into structured slots（解析成结构化槽位）
-3. Generate multiple retrieval queries（生成多组检索查询）
-4. Retrieve relevant multimodal papers（检索相关多模态论文）
-5. Generate structured paper cards（生成结构化论文卡片）
-6. Return a short synthesized summary（返回一段整体综合总结）
+### 输入
+输入一段**多模态研究痛点描述**，例如：
 
----
+- 当前在做什么任务
+- 当前遇到的瓶颈是什么
+- 希望系统具备什么能力
+- 不能接受哪些代价或假设
 
-## What V1 Does Not Attempt（V1 暂不尝试做什么）
+### 输出
+系统会返回：
 
-Version 1 does **not** aim to do the following（第一版**不以**以下内容为目标）:
-
-- automatically write papers（自动写论文）
-- automatically generate final research ideas（自动生成最终研究方案）
-- fully replace human research judgment（完全替代人的科研判断）
-- support all scientific domains（支持所有学科领域）
-- build a full knowledge graph from the start（一开始就构建完整知识图谱）
-
-Instead, V1 focuses on a narrower but more useful task（第一版更聚焦于一个更窄但更实用的任务）:
-problem-driven multimodal paper retrieval and structured output（问题驱动的多模态论文检索与结构化输出）.
+1. 对输入问题的结构化解析
+2. 基于问题生成的多组检索查询
+3. 检索得到的候选论文列表
+4. 每篇论文的结构化分析卡片
+5. 一个整体性的简要总结
 
 ---
 
-## Output Structure（输出结构）
+## 4. 当前仅支持的研究主题范围
 
-Each result card is expected to contain the following sections（每张结果卡预期包含以下模块）:
+第一版优先支持多模态领域中的以下问题方向：
 
-### 1. Paper Basic Info（论文基础信息）
-- title（标题）
-- authors（作者）
-- year（年份）
-- venue / source（来源）
-- link（链接）
-
-### 2. Problem Match（问题匹配）
-- which pain point it matches（匹配了你的哪个痛点）
-- which desired capability it addresses（对应了你的哪个目标能力）
-
-### 3. Method Mechanism（方法机制）
-- method type（方法类型）
-- core mechanism（核心机制）
-- whether it focuses on fusion / completion / alignment / uncertainty / robustness（它主要关注融合、补全、对齐、不确定性还是鲁棒性）
-
-### 4. Evidence（证据）
-- datasets（数据集）
-- metrics（指标）
-- experimental support strength（实验支持强度）
-
-### 5. Trade-offs（代价与权衡）
-- model complexity（模型复杂度）
-- data dependency（数据依赖）
-- inference cost（推理代价）
-- assumptions（关键前提）
-
-### 6. Fit Assessment（适配性判断）
-- why it may fit（为什么可能适合）
-- why it may not fit（为什么可能不适合）
-- transfer risk（迁移风险）
+- 模态缺失（missing modality）
+- 不完整多模态学习（incomplete multimodal learning）
+- 多模态融合（multimodal fusion）
+- 不确定性感知多模态学习（uncertainty-aware multimodal learning）
+- 冲突感知证据融合（conflict-aware evidence fusion）
+- 多模态对齐（multimodal alignment）
+- 多模态鲁棒性（multimodal robustness）
+- 部分观测 / 稀疏证据场景（partial observation / sparse evidence）
 
 ---
 
-## Design Principles（设计原则）
+## 5. 第一版不做什么
 
-This project follows several core principles（本项目遵循以下几个核心原则）:
+为了保证第一版能够做得准、做得稳，V1 暂不尝试以下内容：
 
-- Problem first, keyword second（先问题，后关键词）
-- Facts first, inference second（先事实，后推断）
-- Research judgment support, not fake certainty（辅助研究判断，而不是制造虚假的确定性）
-- Trade-off awareness matters（重视代价与权衡）
-- Better retrieval should improve research taste, not just reading speed（更好的检索应当提升科研品味，而不仅是提升阅读速度）
+- 自动写论文
+- 自动生成完整研究方案
+- 自动判断论文“绝对价值”
+- 覆盖所有科学领域
+- 一开始就做完整知识图谱
+- 一开始就做复杂多智能体系统
+- 一开始就做 Web 全栈前端平台
 
----
+第一版的重点是：
 
-## Future Directions（后续方向）
-
-Possible future extensions include（后续可能扩展的方向包括）:
-
-- multimodal problem–method graph（多模态问题—方法图谱）
-- paper memory and note storage（论文记忆与笔记存储）
-- project-specific relevance analysis（面向具体项目的相关性分析）
-- comparison across retrieved methods（候选方法之间的比较）
-- lightweight human-in-the-loop review flow（轻量人工审核流程）
-- broader cross-domain retrieval（更广义的跨领域检索）
+**问题驱动的多模态论文检索与结构化输出。**
 
 ---
 
-## Project Status（项目状态）
+## 6. 核心设计思想
 
-- [x] Project scope defined（项目范围已定义）
-- [x] V1 objective defined（V1 目标已定义）
-- [ ] Input schema implementation（输入 schema 待实现）
-- [ ] Retrieval pipeline implementation（检索流程待实现）
-- [ ] Paper card generator implementation（论文卡片生成器待实现）
-- [ ] Memory / storage layer（记忆/存储层待实现）
+### 6.1 从问题出发，而不是从关键词出发
+系统的起点不是用户给出几个关键词，而是用户描述：
+
+- 我在做什么问题
+- 我遇到了什么难点
+- 我想要什么能力
+- 我不能接受什么代价
+
+### 6.2 检索必须有证据锚点
+系统不允许直接“凭记忆推荐论文”。  
+所有论文结果都应来自真实可验证的检索源，例如：
+
+- arXiv
+- OpenAlex
+- Semantic Scholar（后续可接）
+- 本地已验证论文库（后续可接）
+
+### 6.3 输出必须解释“为什么选这篇”
+系统不能只给一个论文列表，而必须说明：
+
+- 这篇论文对应了你的哪个痛点
+- 它的核心机制是什么
+- 它有哪些实验支持
+- 它可能的代价和边界是什么
+- 它为什么可能适合 / 不适合你的问题
+
+### 6.4 区分事实与推断
+系统输出必须显式区分：
+
+- 直接可观察到的信息
+- 基于论文摘要或元信息的推断
+- 当前无法确定的信息
+
+### 6.5 强调代价、边界与迁移风险
+系统不应只做“方法推荐”，还应提示：
+
+- 模型复杂度
+- 数据依赖
+- 推理代价
+- 假设条件
+- 迁移风险
+- 不适用情形
 
 ---
 
-## License（许可证）
+## 7. 输入示例
 
-MIT License（MIT 开源许可证）
+### 示例输入
+> 我现在做的是多模态情感分析，在测试阶段会出现文本或语音模态缺失。  
+> 我不只是想补全模态，而是希望下游分类依然鲁棒。  
+> 我还希望模型能表达不确定性，避免错误补全误导最终决策。  
+> 现有很多方法只在随机缺失下有效，但我更关心不规则、真实场景下的缺失。
+
+系统会把这段输入解析成类似下面的结构：
+
+- 任务：多模态情感分析
+- 痛点：
+  - 测试阶段模态缺失
+  - 不只是补全，而是保证下游分类鲁棒性
+  - 希望具备不确定性表达能力
+  - 真实缺失模式而非随机缺失
+- 目标能力：
+  - 缺失条件下的鲁棒决策
+  - 不确定性感知
+- 不可接受的假设：
+  - 仅适用于随机缺失
+  - 只关注重建而不关注下游任务
+
+---
+
+## 8. 输出结构
+
+每篇论文的输出卡片预计包含以下模块：
+
+### 8.1 论文基础信息
+- 标题
+- 作者
+- 年份
+- 来源
+- 链接
+
+### 8.2 问题匹配
+- 匹配了输入中的哪个痛点
+- 匹配了输入中的哪个目标能力
+- 为什么会召回这篇论文
+
+### 8.3 方法机制
+- 方法类型
+- 核心机制
+- 方法重点是补全、融合、对齐、不确定性还是鲁棒性
+
+### 8.4 证据
+- 数据集
+- 指标
+- 实验证据强度
+
+### 8.5 代价与权衡
+- 模型复杂度
+- 数据依赖
+- 推理代价
+- 关键假设
+
+### 8.6 适配性判断
+- 为什么可能适合当前问题
+- 为什么可能不适合当前问题
+- 迁移风险
+
+---
+
+## 9. 系统整体流程（V1）
+
+第一版整体流程如下：
+
+1. 用户输入一段研究痛点描述
+2. 系统解析输入，形成结构化问题表示
+3. 系统基于结构化问题生成多组检索查询
+4. 系统从真实论文源中检索候选结果
+5. 系统对候选论文进行结构化提取
+6. 系统生成每篇论文的分析卡片
+7. 系统输出整体总结
+
+---
+
+## 10. 技术路线（V1）
+
+第一版采用“轻量 RAG（Retrieval-Augmented Generation）+ 结构化流水线”的方式实现。
+
+### 为什么使用轻量 RAG
+因为本项目必须减少以下问题：
+
+- 假论文
+- 假链接
+- 凭空编造引用
+- 不基于真实文献的分析
+
+因此，系统应先从真实论文源中检索文献，再让模型基于这些文献元信息和摘要进行分析，而不是让模型直接“想论文”。
+
+### V1 中 RAG 的作用
+- 从外部论文源检索真实论文
+- 将检索到的摘要、标题、作者、链接作为上下文
+- 基于真实上下文做结构化输出
+
+---
+
+## 11. 项目结构（建议）
+
+```text
+multimodal-research-compass/
+├── README.md
+├── requirements.txt
+├── .env.example
+├── src/
+│   ├── main.py
+│   ├── schemas.py
+│   ├── prompts.py
+│   ├── problem_parser.py
+│   ├── query_generator.py
+│   ├── retriever.py
+│   ├── paper_extractor.py
+│   ├── fit_analyzer.py
+│   ├── synthesizer.py
+│   └── reporter.py
+├── outputs/
+│   └── .gitkeep
+└── docs/
+    └── technical_design_v1.md
+## 12. 路线图（Roadmap）
+
+### Phase 1
+完成问题解析、查询生成、论文检索与结果卡片输出。
+
+### Phase 2
+加入本地论文记忆与笔记存储。
+
+### Phase 3
+加入轻量 Problem–Method Graph（问题—方法图）。
+
+### Phase 4
+支持更复杂的跨子方向检索、方法比较与项目关联分析。
+
+---
+
+## 13. 项目状态（Project Status）
+
+- [x] 项目方向已确定
+- [x] V1 范围已确定
+- [x] README 第一版已完成
+- [ ] 输入 Schema 待实现
+- [ ] 检索模块待实现
+- [ ] 论文卡片生成模块待实现
+- [ ] 本地记忆模块待实现
+
+---
+
+## 14. 许可证（License）
+
+MIT License
+
