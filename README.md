@@ -1,4 +1,4 @@
-第一版：A multimodal research assistant that takes problem descriptions as input and returns relevant papers with mechanism, evidence, and trade-off analysis（一个面向多模态研究问题的科研助手：输入研究痛点描述，输出相关论文、方法机制、证据与代价分析）.
+第一版：
 
 # MultiModal Research Compass（多模态科研罗盘）
 
@@ -265,7 +265,7 @@
 
 ---
 
-## 11. 项目结构（建议）
+## 11. 项目结构
 
 ```text
 multimodal-research-compass/
@@ -287,6 +287,8 @@ multimodal-research-compass/
 │   └── .gitkeep
 └── docs/
     └── technical_design_v1.md
+---
+
 ## 12. 路线图（Roadmap）
 
 ### Phase 1
@@ -318,4 +320,3 @@ multimodal-research-compass/
 ## 14. 许可证（License）
 
 MIT License
-
